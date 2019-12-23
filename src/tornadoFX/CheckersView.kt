@@ -226,4 +226,5 @@ class CheckersView : View(), BoardListener {
                 updateBoardAndStatus(Cell(x, y))
         inProcess = true
     }
+
 }
