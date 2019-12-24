@@ -1,16 +1,17 @@
-import core.Board
-import core.BoardListener
-import core.Cell
-import core.Chips
+import core.*
 import javafx.scene.control.Button
+import javafx.scene.control.ButtonBar
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.GridPane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import tornadofx.*
+import kotlin.concurrent.timer
 
 class CheckersView : View(), BoardListener {
+
+    private data class AutoTurnEvent(val player: PlayerAI) : FXEvent()
 
     private val columnsNumber = 8
 
@@ -18,21 +19,28 @@ class CheckersView : View(), BoardListener {
 
     private val buttons = mutableMapOf<Cell, Button>()
 
+    private val board = Board(columnsNumber, rowsNumber)
+
+    private var stage = true
+
+    private var whiteComputer =
+            if ((app as Checkers).whiteHuman) null else PlayerAI(board)
+
+    private var blackComputer =
+            if ((app as Checkers).blackHuman) null else PlayerAI(board)
+
+    private val computerToMakeTurn: PlayerAI?
+        get() = if (stage) whiteComputer else blackComputer
+
     private lateinit var statusLabel: Label
 
     private var inProcess = true
 
     private var grid = GridPane()
 
-    private var stage = true
-
-    private var f = false
-
     private val buttons0 = mutableSetOf<Cell>()
 
     override val root = BorderPane()
-
-    private val board = Board(columnsNumber, rowsNumber)
 
     init {
         title = "CheckersWithAI"
@@ -52,7 +60,7 @@ class CheckersView : View(), BoardListener {
                                 this@CheckersView.close()
                             }
                             item("Restart").action {
-                                restartGame()
+                                reconfigureGame()
                             }
                         }
                     }
@@ -114,11 +122,7 @@ class CheckersView : View(), BoardListener {
                                                                 }
                                                             }
                                                         }
-                                                    } else {
-                                                        val h = stage
-                                                        stage = f
-                                                        f = h
-                                                    }
+                                                    } else stage = !stage
                                                 }
                                                 for (cell0 in buttons0) {
                                                     buttons[cell0]?.apply {
@@ -128,11 +132,10 @@ class CheckersView : View(), BoardListener {
                                                     }
                                                 }
                                                 buttons0.clear()
-                                                if (((stage) && (board.table[cell.x][cell.y].color == 1)) ||
-                                                        ((!stage) && (board.table[cell.x][cell.y].color == 2))) {
+                                                if (((stage) && (board[cell]!!.color == 1)) ||
+                                                        ((!stage) && (board[cell]!!.color == 2))) {
                                                     listener.mustBite(cell)
                                                     if (board.mustBite(cell)) {
-                                                        println(board.biteOfCell(cell))
                                                         val list = board.biteOfCell(cell)
                                                         if (list.isNotEmpty()) {
                                                             for (cells in list) {
@@ -145,8 +148,13 @@ class CheckersView : View(), BoardListener {
                                                             }
                                                         }
                                                     } else {
-                                                        println(board.nextStepSimply(cell))
-                                                        for (cells in board.nextStepSimply(cell)) {
+                                                        val set = board.nextStepSimply(cell)
+                                                        if (set.isEmpty()) {
+                                                            inProcess = false
+                                                            statusLabel.text = if (stage)
+                                                                "Black wins" else "White wins"
+                                                        }
+                                                        for (cells in set) {
                                                             buttons0 += cells
                                                             buttons[cells]?.apply {
                                                                 graphic = circle(radius = 20.0) {
@@ -180,8 +188,15 @@ class CheckersView : View(), BoardListener {
                         }
                     }
                 }
+                subscribe<AutoTurnEvent> {
+                    when {
+                        whiteComputer != null -> nextStepBest(1)
+                        blackComputer != null -> nextStepBest(2)
+                    }
+                }
             }
         }
+        startTimerIfNeeded()
     }
 
     override fun restart(cell: Cell) {
@@ -193,26 +208,52 @@ class CheckersView : View(), BoardListener {
         statusLabel.text = when (winner) {
             1 -> {
                 inProcess = false
-                "White win! Press 'Restart' to continue or 'Exit'"
+                "White win! Press 'Restart' or 'Exit'"
             }
             2 -> {
                 inProcess = false
-                "Black win! Press 'Restart' to continue or 'Exit'"
+                "Black win! Press 'Restart' or 'Exit'"
             }
             else -> "Начало игры. Белых: ${board.score().first}, Чёрных: ${board.score().second}"
         }
         if (cell == null) return
-        val chip = board.table[cell.x][cell.y]
+        val chip = board[cell]
         buttons[cell]?.apply {
             graphic = circle(radius = 20.0) {
                 fill = when (chip) {
-                    Chips.White_Simply -> Color.ALICEBLUE
-                    Chips.Black_Simply -> Color.DARKBLUE
-                    Chips.Black_Damka -> Color.GRAY
-                    Chips.White_Damka -> Color.CORAL
+                    Chips.WhiteSimply -> Color.ALICEBLUE
+                    Chips.BlackSimply -> Color.DARKBLUE
+                    Chips.BlackDamka -> Color.GRAY
+                    Chips.WhiteDamka -> Color.CORAL
                     else -> Color.BLACK
                 }
             }
+        }
+    }
+
+    private fun startTimerIfNeeded() {
+        if (whiteComputer != null || blackComputer != null) {
+            timer(daemon = true, period = 2000) {
+                if (inProcess) {
+                    computerToMakeTurn?.let {
+                        fire(AutoTurnEvent(it))
+                    }
+                } else {
+                    this.cancel()
+                }
+            }
+        }
+    }
+
+    private fun reconfigureGame() {
+        val dialog = ChoosePlayerDialog()
+        val result = dialog.showAndWait()
+        if (result.isPresent && result.get().buttonData == ButtonBar.ButtonData.OK_DONE) {
+            whiteComputer = if (dialog.whiteComputer) PlayerAI(board) else null
+            blackComputer = if (dialog.blackComputer) PlayerAI(board) else null
+            restartGame()
+        } else {
+            close()
         }
     }
 
@@ -225,6 +266,17 @@ class CheckersView : View(), BoardListener {
             for (y in 0 until rowsNumber)
                 updateBoardAndStatus(Cell(x, y))
         inProcess = true
+        startTimerIfNeeded()
     }
 
+    private fun nextStepBest(color: Int) {
+        val pair = PlayerAI(board).nextStep(color)
+        if (board.mustBite(pair.first)) board.biteOfCell(pair.first) else
+            board.nextStepSimply(pair.first)
+        board.delete(pair.second)
+        stage = !stage
+        for (x in 0 until rowsNumber)
+            for (y in 0 until columnsNumber)
+                updateBoardAndStatus(Cell(x, y))
+    }
 }

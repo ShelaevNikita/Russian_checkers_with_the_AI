@@ -1,11 +1,8 @@
 package core
 
 import java.lang.StringBuilder
-import java.util.*
 
-class Board @JvmOverloads constructor(private val width: Int = 8, private val height: Int = 8) {
-
-    private val chips = HashMap<Cell, Chips>()
+class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
 
     var listener: BoardListener? = null
         private set
@@ -19,7 +16,7 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
     }
 
     operator fun get(cell: Cell): Chips? {
-        return chips[cell]
+        return table[cell.x][cell.y]
     }
 
     val table =
@@ -27,15 +24,33 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
                 MutableList(width) { Chips.NO }
             }
 
+    private val whiteSet = mutableSetOf<Cell>()
+
+    private val blackSet = mutableSetOf<Cell>()
+
     fun startGame() {
         for (x in 0 until height)
             for (y in 0 until width) {
                 when {
-                    ((x == 5) || (x == 7)) && (y % 2 == 0) -> table[x][y] = Chips.White_Simply
-                    (x == 6) && (y % 2 == 1) -> table[x][y] = Chips.White_Simply
-                    ((x == 0) || (x == 2)) && (y % 2 == 1) -> table[x][y] = Chips.Black_Simply
-                    (x == 1) && (y % 2 == 0) -> table[x][y] = Chips.Black_Simply
+                    ((x == 5) || (x == 7)) && (y % 2 == 0) -> table[x][y] = Chips.WhiteSimply
+                    (x == 6) && (y % 2 == 1) -> table[x][y] = Chips.WhiteSimply
+                    ((x == 0) || (x == 2)) && (y % 2 == 1) -> table[x][y] = Chips.BlackSimply
+                    (x == 1) && (y % 2 == 0) -> table[x][y] = Chips.BlackSimply
                     else -> table[x][y] = Chips.NO
+                }
+            }
+    }
+
+    private fun createSets() {
+        whiteSet.clear()
+        blackSet.clear()
+        for (x in 0 until height)
+            loop@ for (y in 0 until width) {
+                val cell = Cell(x, y)
+                when {
+                    table[x][y].color == 1 -> whiteSet += cell
+                    table[x][y].color == 2 -> blackSet += cell
+                    else -> continue@loop
                 }
             }
     }
@@ -43,184 +58,173 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
     fun mustBite(cell: Cell): Boolean {
         val chipColor = table[cell.x][cell.y].color
         if (chipColor == 0) return false
-        for (x in 0 until height)
-            for (y in 0 until width)
-                if (chipColor == table[x][y].color) {
-                    val count = table[cell.x][cell.y].count
-                    for (a in 0 until count) {
-                        val height0 = x + a
-                        val width0 = y + a
-                        if ((height0 + 2 < height) && (width0 + 2 < width) &&
-                                (table[height0 + 1][width0 + 1].color > 0) &&
-                                (table[height0 + 1][width0 + 1].color != chipColor) &&
-                                (table[height0 + 2][width0 + 2] == Chips.NO)
-                        ) {
-                            flagBite = true
-                            return true
-                        }
-                    }
-                    for (a in 0 until count) {
-                        val height0 = x - a
-                        val width0 = y - a
-                        if ((height0 - 2 >= 0) && (width0 - 2 >= 0) &&
-                                (table[height0 - 1][width0 - 1].color > 0) &&
-                                (table[height0 - 1][width0 - 1].color != chipColor) &&
-                                (table[height0 - 2][width0 - 2] == Chips.NO)
-                        ) {
-                            flagBite = true
-                            return true
-                        }
-                    }
-                    for (a in 0 until count) {
-                        val height0 = x + a
-                        val width0 = y - a
-                        if ((height0 + 2 < height) && (width0 - 2 >= 0) &&
-                                (table[height0 + 1][width0 - 1].color > 0) &&
-                                (table[height0 + 1][width0 - 1].color != chipColor) &&
-                                (table[height0 + 2][width0 - 2] == Chips.NO)
-                        ) {
-                            flagBite = true
-                            return true
-                        }
-                    }
-                    for (a in 0 until count) {
-                        val height0 = x - a
-                        val width0 = y + a
-                        if ((height0 - 2 >= 0) && (width0 + 2 < width) &&
-                                (table[height0 - 1][width0 + 1].color > 0) &&
-                                (table[height0 - 1][width0 + 1].color != chipColor) &&
-                                (table[height0 - 2][width0 + 2] == Chips.NO)
-                        ) {
-                            flagBite = true
-                            return true
-                        }
-                    }
-                }
+        createSets()
+        val set = when (chipColor) {
+            1 -> whiteSet
+            2 -> blackSet
+            else -> emptySet<Cell>()
+        }
+        for (cells in set) {
+            val count = table[cells.x][cells.y].count
+            val x = cells.x
+            val y = cells.y
+            for (a in 1..count) {
+                val height0 = x + a
+                val width0 = y + a
+                if ((height0 + 1 < height) && (width0 + 1 < width) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 + 1][width0 + 1] == Chips.NO) {
+                        flagBite = true
+                        return true
+                    } else break
+            }
+            for (a in 1..count) {
+                val height0 = x - a
+                val width0 = y - a
+                if ((height0 - 1 >= 0) && (width0 - 1 >= 0) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 - 1][width0 - 1] == Chips.NO) {
+                        flagBite = true
+                        return true
+                    } else break
+            }
+            for (a in 1..count) {
+                val height0 = x + a
+                val width0 = y - a
+                if ((height0 + 1 < height) && (width0 - 1 >= 0) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 + 1][width0 - 1] == Chips.NO) {
+                        flagBite = true
+                        return true
+                    } else break
+            }
+            for (a in 1..count) {
+                val height0 = x - a
+                val width0 = y + a
+                if ((height0 - 1 >= 0) && (width0 + 1 < width) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 - 1][width0 + 1] == Chips.NO) {
+                        flagBite = true
+                        return true
+                    } else break
+            }
+        }
         return false
     }
 
-    fun biteOfCell(cell: Cell): List<Cell> {
+    fun biteOfCell(cell: Cell): Set<Cell> {
         val chipColor = table[cell.x][cell.y].color
-        if (chipColor == 0) return emptyList()
+        if (chipColor == 0) return emptySet()
         val moves = mutableSetOf<Cell>()
         val count = table[cell.x][cell.y].count
         val x = cell.x
         val y = cell.y
         var flag = false
-        for (a in 0 until count) {
-            var height0 = x + a
-            var width0 = y + a
+        for (a in 1..count) {
+            val height0 = x + a
+            val width0 = y + a
             if (!flag) {
-                if ((height0 + 2 < height) && (width0 + 2 < width) &&
-                        (table[height0 + 1][width0 + 1].color > 0) &&
-                        (table[height0 + 1][width0 + 1].color != chipColor) &&
-                        (table[height0 + 2][width0 + 2] == Chips.NO)
-                ) if (((a > 0) && (table[height0][width0] == Chips.NO)) || (a == 0)) {
-                    moves += Cell(height0 + 2, width0 + 2)
-                    flag = true
-                }
+                if ((height0 + 1 < height) && (width0 + 1 < width) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor) &&
+                        (table[height0 + 1][width0 + 1] == Chips.NO))
+                    if (table[height0 + 1][width0 + 1] == Chips.NO) {
+                        moves += Cell(height0 + 1, width0 + 1)
+                        flag = true
+                    } else break
             } else {
-                height0 += 2
-                width0 += 2
                 if ((height0 < height) && (width0 < width) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else continue
-
+                    moves += Cell(height0, width0) else break
             }
         }
         flag = false
-        for (a in 0 until count) {
-            var height0 = x - a
-            var width0 = y - a
+        for (a in 1..count) {
+            val height0 = x - a
+            val width0 = y - a
             if (!flag) {
-                if ((height0 - 2 >= 0) && (width0 - 2 >= 0) &&
-                        (table[height0 - 1][width0 - 1].color > 0) &&
-                        (table[height0 - 1][width0 - 1].color != chipColor) &&
-                        (table[height0 - 2][width0 - 2] == Chips.NO)
-                ) if (((a > 0) && (table[height0][width0] == Chips.NO)) || (a == 0)) {
-                    moves += Cell(height0 - 2, width0 - 2)
-                    flag = true
-                }
+                if ((height0 - 1 >= 0) && (width0 - 1 >= 0) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor) &&
+                        (table[height0 - 1][width0 - 1] == Chips.NO))
+                    if (table[height0 - 1][width0 - 1] == Chips.NO) {
+                        moves += Cell(height0 - 1, width0 - 1)
+                        flag = true
+                    } else break
             } else {
-                height0 -= 2
-                width0 -= 2
                 if ((height0 >= 0) && (width0 >= 0) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else continue
+                    moves += Cell(height0, width0) else break
             }
         }
         flag = false
-        for (a in 0 until count) {
-            var height0 = x + a
-            var width0 = y - a
+        for (a in 1..count) {
+            val height0 = x + a
+            val width0 = y - a
             if (!flag) {
-                if ((height0 + 2 < height) && (width0 - 2 >= 0) &&
-                        (table[height0 + 1][width0 - 1].color > 0) &&
-                        (table[height0 + 1][width0 - 1].color != chipColor) &&
-                        (table[height0 + 2][width0 - 2] == Chips.NO)
-                ) if (((a > 0) && (table[height0][width0] == Chips.NO)) || (a == 0)) {
-                    moves += Cell(height0 + 2, width0 - 2)
-                    flag = true
-                }
+                if ((height0 + 1 < height) && (width0 - 1 >= 0) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 + 1][width0 - 1] == Chips.NO) {
+                        moves += Cell(height0 + 1, width0 - 1)
+                        flag = true
+                    } else break
             } else {
-                height0 += 2
-                width0 -= 2
                 if ((height0 < height) && (width0 >= 0) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else continue
+                    moves += Cell(height0, width0) else break
             }
         }
         flag = false
-        for (a in 0 until count) {
-            var height0 = x - a
-            var width0 = y + a
+        for (a in 1..count) {
+            val height0 = x - a
+            val width0 = y + a
             if (!flag) {
-                if ((height0 - 2 >= 0) && (width0 + 2 < width) &&
-                        (table[height0 - 1][width0 + 1].color > 0) &&
-                        (table[height0 - 1][width0 + 1].color != chipColor) &&
-                        (table[height0 - 2][width0 + 2] == Chips.NO)
-                ) if (((a > 0) && (table[height0][width0] == Chips.NO)) || (a == 0)) {
-                    moves += Cell(height0 - 2, width0 + 2)
-                    flag = true
-                }
+                if ((height0 - 1 >= 0) && (width0 + 1 < width) &&
+                        (table[height0][width0].color > 0) &&
+                        (table[height0][width0].color != chipColor))
+                    if (table[height0 - 1][width0 + 1] == Chips.NO) {
+                        moves += Cell(height0 - 1, width0 + 1)
+                        flag = true
+                    } else break
             } else {
-                height0 -= 2
-                width0 += 2
                 if ((height0 >= 0) && (width0 < width) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else continue
+                    moves += Cell(height0, width0) else break
             }
         }
         if (moves.isNotEmpty()) cell0 = cell
-        return moves.toList()
+        return moves
     }
 
     private var cell0 = Cell(0, 0)
 
     var flagBite = false
 
-    fun nextStepSimply(cell: Cell): List<Cell> {
+    fun nextStepSimply(cell: Cell): Set<Cell> {
         val chip = table[cell.x][cell.y]
         val chipColor = chip.color
-        if (chipColor == 0) return emptyList()
+        if (chipColor == 0) return emptySet()
         val moves = mutableSetOf<Cell>()
-        val count = table[cell.x][cell.y].count
+        val count = chip.count
         val x = cell.x
         val y = cell.y
-        if ((chip == Chips.Black_Simply) || (chip.count == width)) {
+        if ((chip == Chips.BlackSimply) || (count == width)) {
             for (a in 1..count) {
                 val height0 = x + a
                 val width0 = y + a
                 if ((height0 < height) && (width0 < width) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else {
-                    continue
-                }
+                    moves += Cell(height0, width0) else break
             }
             for (a in 1..count) {
                 val height0 = x + a
@@ -228,35 +232,29 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
                 if ((height0 < height) && (width0 >= 0) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else {
-                    continue
-                }
+                    moves += Cell(height0, width0) else break
             }
         }
-        if ((chip == Chips.White_Simply) || (chip.count == width)) {
+        if ((chip == Chips.WhiteSimply) || (count == width)) {
             for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y - a
                 if ((height0 >= 0) && (width0 >= 0) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else {
-                    continue
-                }
+                    moves += Cell(height0, width0) else break
             }
-            for (a in 0..count) {
+            for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y + a
                 if ((height0 >= 0) && (width0 < width) &&
                         (table[height0][width0] == Chips.NO)
                 )
-                    moves += Cell(height0, width0) else {
-                    continue
-                }
+                    moves += Cell(height0, width0) else break
             }
         }
         if (moves.isNotEmpty()) cell0 = cell
-        return moves.toList()
+        return moves
     }
 
     fun delete(cell: Cell) {
@@ -315,17 +313,28 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
             }
         }
         if (biteOfCell(cell).isEmpty()) flagBite = false
-        chipToDamka()
+        createSets()
+        chipToDamka(cell)
     }
 
-    private fun chipToDamka() {
-        for (x in 0 until height)
-            for (y in 0 until width) {
-                if ((x == 0) && (table[x][y] == Chips.White_Simply))
-                    table[x][y] = Chips.White_Damka
-                if ((x == height - 1) && (table[x][y] == Chips.Black_Simply))
-                    table[x][y] = Chips.Black_Damka
+    private fun chipToDamka(cell: Cell) {
+        val set = when (table[cell.x][cell.y].color) {
+            1 -> whiteSet
+            2 -> blackSet
+            else -> emptySet<Cell>()
+        }
+        for (cells in set) {
+            val x = cells.x
+            val y = cells.y
+            if ((x == 0) && (table[x][y] == Chips.WhiteSimply)) {
+                table[x][y] = Chips.WhiteDamka
+                break
             }
+            if ((x == height - 1) && (table[x][y] == Chips.BlackSimply)) {
+                table[x][y] = Chips.BlackDamka
+                break
+            }
+        }
     }
 
     fun score(): Pair<Int, Int> {
@@ -333,10 +342,10 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
         var white = 0
         for (x in 0 until height)
             for (y in 0 until width) {
-                if ((table[x][y] == Chips.White_Damka)
-                        || (table[x][y] == Chips.White_Simply)) white++
-                if ((table[x][y] == Chips.Black_Damka)
-                        || (table[x][y] == Chips.Black_Simply)) black++
+                if ((table[x][y] == Chips.WhiteDamka)
+                        || (table[x][y] == Chips.WhiteSimply)) white++
+                if ((table[x][y] == Chips.BlackDamka)
+                        || (table[x][y] == Chips.BlackSimply)) black++
             }
         return Pair(white, black)
     }
@@ -355,10 +364,10 @@ class Board @JvmOverloads constructor(private val width: Int = 8, private val he
         for (x in 0 until height) {
             for (y in 0 until width) {
                 when (table[x][y]) {
-                    Chips.Black_Simply -> sb.append(" Black_Simply ")
-                    Chips.Black_Damka -> sb.append(" Black_Damka ")
-                    Chips.White_Simply -> sb.append(" White_Simply ")
-                    Chips.White_Damka -> sb.append(" White_Damka ")
+                    Chips.BlackSimply -> sb.append(" BlackSimply ")
+                    Chips.BlackDamka -> sb.append(" BlackDamka ")
+                    Chips.WhiteSimply -> sb.append(" WhiteSimply ")
+                    Chips.WhiteDamka -> sb.append(" WhiteDamka ")
                     else -> sb.append("      No      ")
                 }
             }
