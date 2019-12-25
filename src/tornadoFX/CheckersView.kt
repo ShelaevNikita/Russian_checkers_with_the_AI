@@ -3,7 +3,6 @@ import javafx.scene.control.Button
 import javafx.scene.control.ButtonBar
 import javafx.scene.control.Label
 import javafx.scene.layout.BorderPane
-import javafx.scene.layout.GridPane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import tornadofx.*
@@ -21,8 +20,6 @@ class CheckersView : View(), BoardListener {
 
     private val board = Board(columnsNumber, rowsNumber)
 
-    private var stage = true
-
     private var whiteComputer =
             if ((app as Checkers).whiteHuman) null else PlayerAI(board)
 
@@ -30,13 +27,11 @@ class CheckersView : View(), BoardListener {
             if ((app as Checkers).blackHuman) null else PlayerAI(board)
 
     private val computerToMakeTurn: PlayerAI?
-        get() = if (stage) whiteComputer else blackComputer
+        get() = if (board.turn) whiteComputer else blackComputer
 
     private lateinit var statusLabel: Label
 
     private var inProcess = true
-
-    private var grid = GridPane()
 
     private val buttons0 = mutableSetOf<Cell>()
 
@@ -46,6 +41,8 @@ class CheckersView : View(), BoardListener {
         title = "CheckersWithAI"
 
         val listener = BoardBasedCellListener(board)
+
+        board.startGame()
 
         board.registerListener(this)
 
@@ -68,132 +65,112 @@ class CheckersView : View(), BoardListener {
             }
             bottom {
                 statusLabel = label {
-                    text = "Нажмите на экран"
+                    text = ""
                     font = Font(30.0)
                 }
             }
             center {
-                val button = button {
-                    style {
-                        backgroundColor += Color.WHITE
-                        minWidth = 10 * dimension
-                        minHeight = 10 * dimension
-                        text = "Играть"
-                        font = Font(40.0)
-                    }
-                }
-                button.action {
-                    listener.restart()
-                    button.isVisible = false
-                    center {
-                        grid = gridpane {
-                            hgap = 6.0
-                            vgap = 6.0
-                            for (row in 0 until rowsNumber) {
-                                row {
-                                    for (column in 0 until columnsNumber) {
-                                        if (((row % 2 == 0) && (column % 2 == 1)) ||
-                                                ((row % 2 == 1) && (column % 2 == 0))) {
-                                            val cell = Cell(row, column)
-                                            val button1 = button {
-                                                style {
-                                                    backgroundColor += Color.BLACK
-                                                    minWidth = dimension
-                                                    minHeight = dimension
-                                                }
-                                            }
-                                            buttons[cell] = button1
-                                            button1.action {
-                                                if (cell in buttons0) {
-                                                    listener.delete(cell)
-                                                    for (x in 0 until rowsNumber)
-                                                        for (y in 0 until columnsNumber)
-                                                            updateBoardAndStatus(Cell(x, y))
-                                                    buttons0 -= cell
-                                                    if (board.flagBite) {
-                                                        val list = board.biteOfCell(cell)
-                                                        if (list.isNotEmpty()) {
-                                                            for (cells in list) {
-                                                                buttons0 += cells
-                                                                buttons[cells]?.apply {
-                                                                    graphic = circle(radius = 20.0) {
-                                                                        fill = Color.RED
-                                                                    }
-                                                                }
+                gridpane {
+                    hgap = 6.0
+                    vgap = 6.0
+                    for (row in 0 until rowsNumber) {
+                        row {
+                            for (column in 0 until columnsNumber) {
+                                if (((row % 2 == 0) && (column % 2 == 1)) ||
+                                        ((row % 2 == 1) && (column % 2 == 0))) {
+                                    val cell = Cell(row, column)
+                                    val button1 = button {
+                                        style {
+                                            backgroundColor += Color.BLACK
+                                            minWidth = dimension
+                                            minHeight = dimension
+                                        }
+                                    }
+                                    buttons[cell] = button1
+                                    button1.action {
+                                        if (cell in buttons0) {
+                                            listener.delete(cell)
+                                            for (x in 0 until rowsNumber)
+                                                for (y in 0 until columnsNumber)
+                                                    updateBoardAndStatus(Cell(x, y))
+                                            buttons0 -= cell
+                                            if (board.flagBite) {
+                                                val list = board.biteOfCell(cell)
+                                                if (list.isNotEmpty()) {
+                                                    for (cells in list) {
+                                                        buttons0 += cells
+                                                        buttons[cells]?.apply {
+                                                            graphic = circle(radius = 20.0) {
+                                                                fill = Color.RED
                                                             }
                                                         }
-                                                    } else stage = !stage
+                                                    }
                                                 }
-                                                for (cell0 in buttons0) {
-                                                    buttons[cell0]?.apply {
+                                            } else board.turn = !board.turn
+                                        }
+                                        for (cell0 in buttons0) {
+                                            buttons[cell0]?.apply {
+                                                graphic = circle(radius = 20.0) {
+                                                    fill = Color.BLACK
+                                                }
+                                            }
+                                        }
+                                        buttons0.clear()
+                                        if (((board.turn) && (board[cell]!!.color == 1)) ||
+                                                ((!board.turn) && (board[cell]!!.color == 2))) {
+                                            listener.mustBite()
+                                            if (board.mustBite()) {
+                                                statusLabel.text = "Надо бить"
+                                                val list = board.biteOfCell(cell)
+                                                if (list.isNotEmpty()) {
+                                                    for (cells in list) {
+                                                        buttons0 += cells
+                                                        buttons[cells]?.apply {
+                                                            graphic = circle(radius = 20.0) {
+                                                                fill = Color.RED
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                val set = board.nextStepSimply(cell)
+                                                for (cells in set) {
+                                                    buttons0 += cells
+                                                    buttons[cells]?.apply {
                                                         graphic = circle(radius = 20.0) {
-                                                            fill = Color.BLACK
+                                                            fill = Color.RED
                                                         }
                                                     }
                                                 }
-                                                buttons0.clear()
-                                                if (((stage) && (board[cell]!!.color == 1)) ||
-                                                        ((!stage) && (board[cell]!!.color == 2))) {
-                                                    listener.mustBite(cell)
-                                                    if (board.mustBite(cell)) {
-                                                        val list = board.biteOfCell(cell)
-                                                        if (list.isNotEmpty()) {
-                                                            for (cells in list) {
-                                                                buttons0 += cells
-                                                                buttons[cells]?.apply {
-                                                                    graphic = circle(radius = 20.0) {
-                                                                        fill = Color.RED
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    } else {
-                                                        val set = board.nextStepSimply(cell)
-                                                        if (set.isEmpty()) {
-                                                            inProcess = false
-                                                            statusLabel.text = if (stage)
-                                                                "Black wins" else "White wins"
-                                                        }
-                                                        for (cells in set) {
-                                                            buttons0 += cells
-                                                            buttons[cells]?.apply {
-                                                                graphic = circle(radius = 20.0) {
-                                                                    fill = Color.RED
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                if (inProcess) {
-                                                    statusLabel.text = if (stage) "Ход белых" else "Ход чёрных"
-                                                    statusLabel.text += ". Белых: ${board.score().first}," +
-                                                            " Чёрных: ${board.score().second}"
-                                                }
                                             }
-                                        } else {
-                                            button {
-                                                style {
-                                                    backgroundColor += Color.WHITE
-                                                    minWidth = dimension
-                                                    minHeight = dimension
-                                                }
-                                            }
+                                            if (buttons.isEmpty()) inProcess = false
+                                        }
+                                        if (inProcess) {
+                                            statusLabel.text = if (board.turn) "Ход белых" else "Ход чёрных"
+                                            statusLabel.text += ". Белых: ${board.score().first}," +
+                                                    " Чёрных: ${board.score().second}"
+                                        }
+                                    }
+                                } else {
+                                    button {
+                                        style {
+                                            backgroundColor += Color.WHITE
+                                            minWidth = dimension
+                                            minHeight = dimension
                                         }
                                     }
                                 }
                             }
-                            for (x in 0 until rowsNumber)
-                                for (y in 0 until columnsNumber)
-                                    updateBoardAndStatus(Cell(x, y))
                         }
                     }
+                    for (x in 0 until rowsNumber)
+                        for (y in 0 until columnsNumber)
+                            updateBoardAndStatus(Cell(x, y))
                 }
-                subscribe<AutoTurnEvent> {
-                    when {
-                        whiteComputer != null -> nextStepBest(1)
-                        blackComputer != null -> nextStepBest(2)
-                    }
-                }
+            }
+            subscribe<AutoTurnEvent> {
+                if (whiteComputer != null) nextStepBest(1)
+                if (blackComputer != null) nextStepBest(2)
             }
         }
         startTimerIfNeeded()
@@ -205,16 +182,13 @@ class CheckersView : View(), BoardListener {
 
     private fun updateBoardAndStatus(cell: Cell? = null) {
         val winner = board.win()
-        statusLabel.text = when (winner) {
-            1 -> {
-                inProcess = false
-                "White win! Press 'Restart' or 'Exit'"
-            }
-            2 -> {
-                inProcess = false
-                "Black win! Press 'Restart' or 'Exit'"
-            }
-            else -> "Начало игры. Белых: ${board.score().first}, Чёрных: ${board.score().second}"
+        if (winner == 1) {
+            inProcess = false
+            statusLabel.text = "White win! Press 'Restart' or 'Exit'"
+        }
+        if (winner == 2) {
+            inProcess = false
+            statusLabel.text = "Black win! Press 'Restart' or 'Exit'"
         }
         if (cell == null) return
         val chip = board[cell]
@@ -259,7 +233,7 @@ class CheckersView : View(), BoardListener {
 
     private fun restartGame() {
         statusLabel.text = ""
-        stage = true
+        board.turn = true
         buttons0.clear()
         board.startGame()
         for (x in 0 until columnsNumber)
@@ -270,13 +244,13 @@ class CheckersView : View(), BoardListener {
     }
 
     private fun nextStepBest(color: Int) {
-        val pair = PlayerAI(board).nextStep(color)
-        if (board.mustBite(pair.first)) board.biteOfCell(pair.first) else
+        val pair = PlayerAI(board).nextStep(color, 4)
+        if (board.mustBite()) board.biteOfCell(pair.first) else
             board.nextStepSimply(pair.first)
         board.delete(pair.second)
-        stage = !stage
         for (x in 0 until rowsNumber)
             for (y in 0 until columnsNumber)
                 updateBoardAndStatus(Cell(x, y))
+        board.turn = !board.turn
     }
 }

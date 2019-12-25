@@ -7,8 +7,8 @@ class BoardBasedCellListener(private val board: Board) : CellListener {
         board.startGame()
     }
 
-    override fun mustBite(cell: Cell) {
-        board.mustBite(cell)
+    override fun mustBite() {
+        board.mustBite()
     }
 
     override fun delete(cell: Cell) {

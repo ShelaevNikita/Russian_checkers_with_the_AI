@@ -2,6 +2,6 @@ import core.Cell
 
 interface CellListener {
     fun restart()
-    fun mustBite(cell: Cell)
+    fun mustBite()
     fun delete(cell: Cell)
 }
