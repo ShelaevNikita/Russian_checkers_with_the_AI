@@ -70,46 +70,58 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             for (a in 1..count) {
                 val height0 = x + a
                 val width0 = y + a
-                if ((height0 + 1 < height) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 + 1][width0 + 1] == Chips.NO) {
-                        flagBite = true
-                        return true
-                    } else break
+                if ((height0 + 1 < height) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 + 1][width0 + 1] == Chips.NO) {
+                            flagBite = true
+                            return true
+                        } else break
+                }
             }
             for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y - a
-                if ((height0 - 1 >= 0) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 - 1][width0 - 1] == Chips.NO) {
-                        flagBite = true
-                        return true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 - 1][width0 - 1] == Chips.NO) {
+                            flagBite = true
+                            return true
+                        } else break
+                }
             }
             for (a in 1..count) {
                 val height0 = x + a
                 val width0 = y - a
-                if ((height0 + 1 < height) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 + 1][width0 - 1] == Chips.NO) {
-                        flagBite = true
-                        return true
-                    } else break
+                if ((height0 + 1 < height) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 + 1][width0 - 1] == Chips.NO) {
+                            flagBite = true
+                            return true
+                        } else break
+                }
             }
             for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y + a
-                if ((height0 - 1 >= 0) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 - 1][width0 + 1] == Chips.NO) {
-                        flagBite = true
-                        return true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 - 1][width0 + 1] == Chips.NO) {
+                            flagBite = true
+                            return true
+                        } else break
+                }
             }
         }
         return false
@@ -127,17 +139,18 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             val height0 = x + a
             val width0 = y + a
             if (!flag) {
-                if ((height0 + 1 < height) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 + 1][width0 + 1] == Chips.NO) {
-                        moves += Cell(height0 + 1, width0 + 1)
-                        flag = true
-                    } else break
+                if ((height0 + 1 < height) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 + 1][width0 + 1] == Chips.NO) {
+                            moves += Cell(height0 + 1, width0 + 1)
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 < height) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -146,17 +159,18 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             val height0 = x - a
             val width0 = y - a
             if (!flag) {
-                if ((height0 - 1 >= 0) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 - 1][width0 - 1] == Chips.NO) {
-                        moves += Cell(height0 - 1, width0 - 1)
-                        flag = true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 - 1][width0 - 1] == Chips.NO) {
+                            moves += Cell(height0 - 1, width0 - 1)
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 >= 0) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -165,17 +179,18 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             val height0 = x + a
             val width0 = y - a
             if (!flag) {
-                if ((height0 + 1 < height) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 + 1][width0 - 1] == Chips.NO) {
-                        moves += Cell(height0 + 1, width0 - 1)
-                        flag = true
-                    } else break
+                if ((height0 + 1 < height) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 + 1][width0 - 1] == Chips.NO) {
+                            moves += Cell(height0 + 1, width0 - 1)
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 < height) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -184,17 +199,18 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             val height0 = x - a
             val width0 = y + a
             if (!flag) {
-                if ((height0 - 1 >= 0) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != chipColor))
-                    if (table[height0 - 1][width0 + 1] == Chips.NO) {
-                        moves += Cell(height0 - 1, width0 + 1)
-                        flag = true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == chipColor) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != chipColor))
+                        if (table[height0 - 1][width0 + 1] == Chips.NO) {
+                            moves += Cell(height0 - 1, width0 + 1)
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 >= 0) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -216,17 +232,13 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             for (a in 1..count) {
                 val height0 = x + a
                 val width0 = y + a
-                if ((height0 < height) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
             for (a in 1..count) {
                 val height0 = x + a
                 val width0 = y - a
-                if ((height0 < height) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -234,17 +246,13 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
             for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y - a
-                if ((height0 >= 0) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
             for (a in 1..count) {
                 val height0 = x - a
                 val width0 = y + a
-                if ((height0 >= 0) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Cell(height0, width0) else break
             }
         }
@@ -252,7 +260,7 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
         return moves
     }
 
-    fun delete(cell: Cell) {
+    fun move(cell: Cell) {
         val chip = table[cell0.x][cell0.y]
         table[cell0.x][cell0.y] = Chips.NO
         table[cell.x][cell.y] = chip
@@ -266,8 +274,7 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                         val height0 = x + a
                         val width0 = y + a
                         if ((height0 < height) && (width0 < width) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
@@ -277,8 +284,7 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                         val height0 = x + a
                         val width0 = y - a
                         if ((height0 < height) && (width0 >= 0) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
@@ -288,8 +294,7 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                         val height0 = x - a
                         val width0 = y - a
                         if ((height0 >= 0) && (width0 >= 0) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
@@ -299,24 +304,25 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                         val height0 = x - a
                         val width0 = y + a
                         if ((height0 >= 0) && (width0 < width) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
                     }
             }
         }
-        if (biteOfCell(cell).isEmpty()) flagBite = false
+        if (flagBite) {
+            if (biteOfCell(cell).isEmpty()) {
+                flagBite = false
+                turn = !turn
+            }
+        } else turn = !turn
+        createSets()
         chipToDamka()
     }
 
     private fun chipToDamka() {
-        createSets()
-        val set = when (turn) {
-            true -> whiteSet
-            else -> blackSet
-        }
+        val set = if (!turn) whiteSet else blackSet
         for (cells in set) {
             val x = cells.x
             val y = cells.y
@@ -343,15 +349,34 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
     }
 
     fun win(): Int {
+        createSets()
+        var whiteMove = false
+        var blackMove = false
+        val cellFirst = cell0
+        for (move in whiteSet) {
+            cell0 = cellFirst
+            if (nextStepSimply(move).isNotEmpty()) {
+                whiteMove = true
+                break
+            }
+        }
+        for (move in blackSet) {
+            cell0 = cellFirst
+            if (nextStepSimply(move).isNotEmpty()) {
+                blackMove = true
+                break
+            }
+        }
+        cell0 = cellFirst
         val pair = score()
         return when {
-            pair.first == 0 -> 2
-            pair.second == 0 -> 1
+            ((pair.first == 0) || (!whiteMove)) -> 2
+            ((pair.second == 0) || (!blackMove)) -> 1
             else -> 0
         }
     }
 
-    override fun toString(): String {
+    fun toString(table: MutableList<MutableList<Chips>>): String {
         val sb = StringBuilder()
         for (x in 0 until height) {
             for (y in 0 until width) {

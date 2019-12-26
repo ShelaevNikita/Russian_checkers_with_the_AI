@@ -2,11 +2,7 @@ package core
 
 import java.util.*
 
-class PlayerAI(board: Board) {
-
-    private val makeSimply = 15
-
-    private val makeDamka = 45
+class PlayerAI(private val board: Board) {
 
     private val height = board.height
 
@@ -16,23 +12,28 @@ class PlayerAI(board: Board) {
 
     private val blackSet = mutableSetOf<Cell>()
 
-    private fun createSets(table: MutableList<MutableList<Chips>>) {
-        whiteSet.clear()
-        blackSet.clear()
-        for (x in 0 until height)
-            loop@ for (y in 0 until width) {
-                val cell = Cell(x, y)
-                when {
-                    table[x][y].color == 1 -> whiteSet += cell
-                    table[x][y].color == 2 -> blackSet += cell
-                    else -> continue@loop
+    private fun createSets(turn: Boolean, table: MutableList<MutableList<Chips>>) {
+        if (turn) {
+            whiteSet.clear()
+            for (x in 0 until height)
+                for (y in 0 until width) {
+                    val cell = Cell(x, y)
+                    if (table[x][y].color == 1) whiteSet += cell
                 }
-            }
+        } else {
+            blackSet.clear()
+            for (x in 0 until height)
+                for (y in 0 until width) {
+                    val cell = Cell(x, y)
+                    if (table[x][y].color == 2) blackSet += cell
+                }
+        }
     }
 
-    private fun biteOfCell(color: Int, cell: Cell,
-                           table: MutableList<MutableList<Chips>>): Set<Pair<Cell, Cell>> {
-        val moves = mutableSetOf<Pair<Cell, Cell>>()
+    private fun biteOfCell(turn: Boolean, cell: Cell,
+                           table: MutableList<MutableList<Chips>>): List<Pair<Cell, Cell>> {
+        val moves = mutableListOf<Pair<Cell, Cell>>()
+        val color = if (turn) 1 else 2
         val count = table[cell.x][cell.y].count
         val x = cell.x
         val y = cell.y
@@ -41,17 +42,18 @@ class PlayerAI(board: Board) {
             val height0 = x + a
             val width0 = y + a
             if (!flag) {
-                if ((height0 + 1 < height) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != color))
-                    if (table[height0 + 1][width0 + 1] == Chips.NO) {
-                        moves += Pair(cell, Cell(height0 + 1, width0 + 1))
-                        flag = true
-                    } else break
+                if ((height0 + 1 < height) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == color) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != color))
+                        if (table[height0 + 1][width0 + 1] == Chips.NO) {
+                            moves += Pair(cell, Cell(height0 + 1, width0 + 1))
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 < height) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Pair(cell, Cell(height0, width0)) else break
             }
         }
@@ -60,17 +62,18 @@ class PlayerAI(board: Board) {
             val height0 = x - a
             val width0 = y - a
             if (!flag) {
-                if ((height0 - 1 >= 0) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != color))
-                    if (table[height0 - 1][width0 - 1] == Chips.NO) {
-                        moves += Pair(cell, Cell(height0 - 1, width0 - 1))
-                        flag = true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == color) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != color))
+                        if (table[height0 - 1][width0 - 1] == Chips.NO) {
+                            moves += Pair(cell, Cell(height0 - 1, width0 - 1))
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 >= 0) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Pair(cell, Cell(height0, width0)) else break
             }
         }
@@ -79,17 +82,18 @@ class PlayerAI(board: Board) {
             val height0 = x + a
             val width0 = y - a
             if (!flag) {
-                if ((height0 + 1 < height) && (width0 - 1 >= 0) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != color))
-                    if (table[height0 + 1][width0 - 1] == Chips.NO) {
-                        moves += Pair(cell, Cell(height0 + 1, width0 - 1))
-                        flag = true
-                    } else break
+                if ((height0 + 1 < height) && (width0 - 1 >= 0)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == color) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != color))
+                        if (table[height0 + 1][width0 - 1] == Chips.NO) {
+                            moves += Pair(cell, Cell(height0 + 1, width0 - 1))
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 < height) && (width0 >= 0) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 < height) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                     moves += Pair(cell, Cell(height0, width0)) else break
             }
         }
@@ -98,42 +102,35 @@ class PlayerAI(board: Board) {
             val height0 = x - a
             val width0 = y + a
             if (!flag) {
-                if ((height0 - 1 >= 0) && (width0 + 1 < width) &&
-                        (table[height0][width0].color > 0) &&
-                        (table[height0][width0].color != color))
-                    if (table[height0 - 1][width0 + 1] == Chips.NO) {
-                        moves += Pair(cell, Cell(height0 - 1, width0 + 1))
-                        flag = true
-                    } else break
+                if ((height0 - 1 >= 0) && (width0 + 1 < width)) {
+                    if (table[height0][width0] == Chips.NO) continue
+                    if (table[height0][width0].color == color) break
+                    if ((table[height0][width0].color > 0) &&
+                            (table[height0][width0].color != color))
+                        if (table[height0 - 1][width0 + 1] == Chips.NO) {
+                            moves += Pair(cell, Cell(height0 - 1, width0 + 1))
+                            flag = true
+                        } else break
+                }
             } else {
-                if ((height0 >= 0) && (width0 < width) &&
-                        (table[height0][width0] == Chips.NO)
-                )
+                if ((height0 >= 0) && (width0 < width) && (table[height0][width0] == Chips.NO))
                     moves += Pair(cell, Cell(height0, width0)) else break
             }
         }
         return moves
     }
 
-    private fun mustBite(color: Int, table: MutableList<MutableList<Chips>>): Set<Pair<Cell, Cell>> {
-        val moves = mutableSetOf<Pair<Cell, Cell>>()
-        createSets(table)
-        val set = when (color) {
-            1 -> whiteSet
-            2 -> blackSet
-            else -> emptySet<Cell>()
-        }
-        for (cells in set) moves += biteOfCell(color, cells, table)
+    private fun mustBite(turn: Boolean, table: MutableList<MutableList<Chips>>): List<Pair<Cell, Cell>> {
+        val moves = mutableListOf<Pair<Cell, Cell>>()
+        createSets(turn, table)
+        val set = if (turn) whiteSet else blackSet
+        for (cells in set) moves += biteOfCell(turn, cells, table)
         return moves
     }
 
-    private fun nextStepSimply(color: Int, table: MutableList<MutableList<Chips>>): Set<Pair<Cell, Cell>> {
-        val moves = mutableSetOf<Pair<Cell, Cell>>()
-        val set = when (color) {
-            1 -> whiteSet
-            2 -> blackSet
-            else -> emptySet<Cell>()
-        }
+    private fun nextStepSimply(turn: Boolean, table: MutableList<MutableList<Chips>>): List<Pair<Cell, Cell>> {
+        val moves = mutableListOf<Pair<Cell, Cell>>()
+        val set = if (turn) whiteSet else blackSet
         for (cells in set) {
             val chip = table[cells.x][cells.y]
             val count = chip.count
@@ -144,16 +141,13 @@ class PlayerAI(board: Board) {
                     val height0 = x + a
                     val width0 = y + a
                     if ((height0 < height) && (width0 < width) &&
-                            (table[height0][width0] == Chips.NO)
-                    )
+                            (table[height0][width0] == Chips.NO))
                         moves += Pair(cells, Cell(height0, width0)) else break
                 }
                 for (a in 1..count) {
                     val height0 = x + a
                     val width0 = y - a
-                    if ((height0 < height) && (width0 >= 0) &&
-                            (table[height0][width0] == Chips.NO)
-                    )
+                    if ((height0 < height) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                         moves += Pair(cells, Cell(height0, width0)) else break
                 }
             }
@@ -161,17 +155,13 @@ class PlayerAI(board: Board) {
                 for (a in 1..count) {
                     val height0 = x - a
                     val width0 = y - a
-                    if ((height0 >= 0) && (width0 >= 0) &&
-                            (table[height0][width0] == Chips.NO)
-                    )
+                    if ((height0 >= 0) && (width0 >= 0) && (table[height0][width0] == Chips.NO))
                         moves += Pair(cells, Cell(height0, width0)) else break
                 }
                 for (a in 1..count) {
                     val height0 = x - a
                     val width0 = y + a
-                    if ((height0 >= 0) && (width0 < width) &&
-                            (table[height0][width0] == Chips.NO)
-                    )
+                    if ((height0 >= 0) && (width0 < width) && (table[height0][width0] == Chips.NO))
                         moves += Pair(cells, Cell(height0, width0)) else break
                 }
             }
@@ -179,16 +169,17 @@ class PlayerAI(board: Board) {
         return moves
     }
 
-    private fun delete(cell0: Cell, cell: Cell, table: MutableList<MutableList<Chips>>) {
-        val chip = table[cell0.x][cell0.y]
-        table[cell0.x][cell0.y] = Chips.NO
-        table[cell.x][cell.y] = chip
+    private fun move(turn: Boolean, cellFirst: Cell, cellSecond: Cell,
+                     table: MutableList<MutableList<Chips>>) {
+        val chip = table[cellFirst.x][cellFirst.y]
+        table[cellFirst.x][cellFirst.y] = Chips.NO
+        table[cellSecond.x][cellSecond.y] = chip
         val count = chip.count
-        val x = cell.x
-        val y = cell.y
-        if (mustBite(chip.color, table).isNotEmpty()) {
+        val x = cellSecond.x
+        val y = cellSecond.y
+        if (mustBite(turn, table).isNotEmpty()) {
             when {
-                ((cell0.x > x) && (cell0.y > y)) ->
+                ((cellFirst.x > x) && (cellFirst.y > y)) ->
                     for (a in 1..count) {
                         val height0 = x + a
                         val width0 = y + a
@@ -199,24 +190,22 @@ class PlayerAI(board: Board) {
                             break
                         }
                     }
-                ((cell0.x > x) && (cell0.y < y)) ->
+                ((cellFirst.x > x) && (cellFirst.y < y)) ->
                     for (a in 1..count) {
                         val height0 = x + a
                         val width0 = y - a
                         if ((height0 < height) && (width0 >= 0) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
                     }
-                ((cell0.x < x) && (cell0.y < y)) ->
+                ((cellFirst.x < x) && (cellFirst.y < y)) ->
                     for (a in 1..count) {
                         val height0 = x - a
                         val width0 = y - a
                         if ((height0 >= 0) && (width0 >= 0) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
@@ -226,24 +215,19 @@ class PlayerAI(board: Board) {
                         val height0 = x - a
                         val width0 = y + a
                         if ((height0 >= 0) && (width0 < width) &&
-                                (table[height0][width0] != Chips.NO)
-                        ) {
+                                (table[height0][width0] != Chips.NO)) {
                             table[height0][width0] = Chips.NO
                             break
                         }
                     }
             }
         }
-        chipToDamka(chip.color, table)
+        chipToDamka(turn, table)
     }
 
-    private fun chipToDamka(color: Int, table: MutableList<MutableList<Chips>>) {
-        createSets(table)
-        val set = when (color) {
-            1 -> whiteSet
-            2 -> blackSet
-            else -> emptySet<Cell>()
-        }
+    private fun chipToDamka(turn: Boolean, table: MutableList<MutableList<Chips>>) {
+        createSets(turn, table)
+        val set = if (turn) whiteSet else blackSet
         for (cells in set) {
             val x = cells.x
             val y = cells.y
@@ -256,12 +240,6 @@ class PlayerAI(board: Board) {
                 break
             }
         }
-    }
-
-    private fun changeColor(color: Int): Int = when (color) {
-        1 -> 2
-        2 -> 1
-        else -> 0
     }
 
     private val table = board.table
@@ -277,9 +255,13 @@ class PlayerAI(board: Board) {
         return result
     }
 
-    private fun getValue(color: Int, count: Double,
-                         table: MutableList<MutableList<Chips>>): Double {
-        var result = 0
+    private val makeSimply = 15.0
+
+    private val makeDamka = 30.0
+
+    private fun getValue(turn: Boolean, table: MutableList<MutableList<Chips>>): Double {
+        createSets(turn, table)
+        var result = 0.0
         var numberBlackSimply = 0
         var numberBlackDamka = 0
         var numberWhiteSimply = 0
@@ -294,40 +276,63 @@ class PlayerAI(board: Board) {
         }
         val whiteCount = numberWhiteDamka * makeDamka + numberWhiteSimply * makeSimply
         val blackCount = numberBlackDamka * makeDamka + numberBlackSimply * makeSimply
-        if (color == 1) result = whiteCount - blackCount
-        if (color == 2) result = blackCount - whiteCount
-        return result * count
+        if (turn) result = whiteCount - blackCount
+        if (!turn) result = blackCount - whiteCount
+        return result
     }
 
-    private fun minimax(color: Int, count: Double, depth: Int, maxPlayer: Boolean,
+    private var moveMaxSum = 0.0
+
+    private var numberMoves = 0
+
+    private val midSumMoves = mutableListOf<Pair<Int, Double>>()
+
+    private var step = -1
+
+    private fun minimax(turn: Boolean, count: Double, depth: Int, maxPlayer: Boolean,
                         table: MutableList<MutableList<Chips>>,
                         alpha: Double, beta: Double): Double {
-        if (depth == 0) return getValue(color, count, table)
+        if (depth <= 0) return getValue(turn, table)
+        if ((maxPlayer) && (board.win() == 1)) return 100.0 * count
+        if ((!maxPlayer) && (board.win() == 2)) return -100.0 * count
         var alphaChange = alpha
         var betaChange = beta
-        val mustBite = mustBite(color, table)
-        val set = if (mustBite.isEmpty())
-            nextStepSimply(color, table) else mustBite
+        val mustBite = mustBite(turn, table)
+        val listMove = if (mustBite.isEmpty())
+            nextStepSimply(turn, table) else mustBite
         var initial: Double
-        val countChange = count - 0.1 * depth
+        val countChange = count - 0.1
         if (maxPlayer) {
-            initial = Double.MIN_VALUE
-            for (move in set) {
+            initial = -10000.0
+            for (move in listMove) {
                 val tableGhost = clone(table)
-                delete(move.first, move.second, tableGhost)
-                val result = minimax(changeColor(color),
+                if (mustBite.isEmpty())
+                    move(turn, move.first, move.second, tableGhost)
+                else moveAll(turn, mustBite, tableGhost)
+                val result = minimax(!turn,
                         countChange, depth - 1, !maxPlayer,
                         tableGhost, alphaChange, betaChange) * count
+                if (depth <= 2) {
+                    moveMaxSum += result
+                    numberMoves++
+                }
                 initial = maxOf(result, initial)
                 alphaChange = maxOf(alphaChange, initial)
                 if (alphaChange > betaChange) break
             }
+            if (depth <= 2) {
+                midSumMoves += Pair(step, moveMaxSum / numberMoves)
+                moveMaxSum = 0.0
+                numberMoves = 0
+            }
         } else {
-            initial = Double.MAX_VALUE
-            for (move in set) {
+            initial = 10000.0
+            for (move in listMove) {
                 val tableGhost = clone(table)
-                delete(move.first, move.second, tableGhost)
-                val result = minimax(changeColor(color),
+                if (mustBite.isEmpty())
+                    move(turn, move.first, move.second, tableGhost)
+                else moveAll(turn, mustBite, tableGhost)
+                val result = minimax(!turn,
                         countChange, depth - 1, !maxPlayer,
                         tableGhost, alphaChange, betaChange) * count
                 initial = minOf(result, initial)
@@ -338,31 +343,56 @@ class PlayerAI(board: Board) {
         return initial
     }
 
-    fun nextStep(colorFirst: Int, depth: Int): Pair<Cell, Cell> {
-        val alpha = Double.MIN_VALUE
-        val beta = Double.MAX_VALUE
+    fun nextStep(turn: Boolean, depth: Int): Pair<Cell, Cell>? {
+        val alpha = -10000.0
+        val beta = 10000.0
         val count = 1.0
         val maxPlayer = true
-        val mustBite = mustBite(colorFirst, table)
-        val set = if (mustBite.isEmpty())
-            nextStepSimply(colorFirst, table) else mustBite
+        val mustBite = mustBite(turn, table)
+        val list = if (mustBite.isEmpty())
+            nextStepSimply(turn, table) else mustBite
+        if (list.isEmpty()) return null
         val heuristics = mutableListOf<Double>()
-        for (move in set) {
+        step = -1
+        for (move in list) {
+            step++
             val tableGhost = clone(table)
-            delete(move.first, move.second, tableGhost)
-            heuristics.add(minimax(changeColor(colorFirst), count,
-                    depth - 1, !maxPlayer, tableGhost, alpha, beta))
-
+            if (mustBite.isEmpty())
+                move(turn, move.first, move.second, tableGhost)
+            else moveAll(turn, mustBite, tableGhost)
+            if (list.size == 1) return move
+            heuristics.add(minimax(!turn, count, depth - 1,
+                    !maxPlayer, tableGhost, alpha, beta))
         }
-        var maxHeuristics = Double.MIN_VALUE
+        val maxHeuristics = heuristics.max()!!
+        var midStep = 0
+        if (depth >= 3) {
+            val midCountStep = midSumMoves.maxBy { it.second }!!
+            for (moves in midSumMoves) {
+                if (moves == midCountStep) {
+                    midStep = moves.first
+                    break
+                }
+            }
+        }
         val random = Random()
-        for (x in heuristics.size - 1 downTo 0) {
-            if (heuristics[x] > maxHeuristics) maxHeuristics = heuristics[x]
-        }
-        val listMove = set.toMutableList()
+        val listMove = mutableListOf<Pair<Cell, Cell>>()
         for (x in 0 until heuristics.size) {
-            if (heuristics[x] < maxHeuristics) listMove -= listMove[x]
+            if (heuristics[x] == maxHeuristics) listMove += list[x]
         }
-        return listMove[random.nextInt(listMove.size)]
+        return if ((depth >= 3) && (listMove.size > midStep) && (listMove.size > 1))
+            listMove[midStep]
+        else listMove[random.nextInt(listMove.size)]
+    }
+
+    private fun moveAll(turn: Boolean, list: List<Pair<Cell, Cell>>,
+                        table: MutableList<MutableList<Chips>>) {
+        var biteList = list
+        var pair: Pair<Cell, Cell>
+        while (biteList.isNotEmpty()) {
+            pair = if (turn) biteList.last() else biteList.first()
+            move(turn, pair.first, pair.second, table)
+            biteList = biteOfCell(turn, pair.second, table)
+        }
     }
 }

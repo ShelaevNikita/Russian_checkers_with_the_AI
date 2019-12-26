@@ -65,7 +65,7 @@ class CheckersView : View(), BoardListener {
             }
             bottom {
                 statusLabel = label {
-                    text = ""
+                    text = "Начало игры. Ход белых"
                     font = Font(30.0)
                 }
             }
@@ -106,7 +106,7 @@ class CheckersView : View(), BoardListener {
                                                         }
                                                     }
                                                 }
-                                            } else board.turn = !board.turn
+                                            }
                                         }
                                         for (cell0 in buttons0) {
                                             buttons[cell0]?.apply {
@@ -120,7 +120,6 @@ class CheckersView : View(), BoardListener {
                                                 ((!board.turn) && (board[cell]!!.color == 2))) {
                                             listener.mustBite()
                                             if (board.mustBite()) {
-                                                statusLabel.text = "Надо бить"
                                                 val list = board.biteOfCell(cell)
                                                 if (list.isNotEmpty()) {
                                                     for (cells in list) {
@@ -143,7 +142,6 @@ class CheckersView : View(), BoardListener {
                                                     }
                                                 }
                                             }
-                                            if (buttons.isEmpty()) inProcess = false
                                         }
                                         if (inProcess) {
                                             statusLabel.text = if (board.turn) "Ход белых" else "Ход чёрных"
@@ -163,17 +161,17 @@ class CheckersView : View(), BoardListener {
                             }
                         }
                     }
-                    for (x in 0 until rowsNumber)
-                        for (y in 0 until columnsNumber)
-                            updateBoardAndStatus(Cell(x, y))
                 }
             }
             subscribe<AutoTurnEvent> {
-                if (whiteComputer != null) nextStepBest(1)
-                if (blackComputer != null) nextStepBest(2)
+                if (whiteComputer != null) nextStepBest(true)
+                if (blackComputer != null) nextStepBest(false)
             }
         }
         startTimerIfNeeded()
+        for (x in 0 until rowsNumber)
+            for (y in 0 until columnsNumber)
+                updateBoardAndStatus(Cell(x, y))
     }
 
     override fun restart(cell: Cell) {
@@ -181,14 +179,15 @@ class CheckersView : View(), BoardListener {
     }
 
     private fun updateBoardAndStatus(cell: Cell? = null) {
-        val winner = board.win()
-        if (winner == 1) {
-            inProcess = false
-            statusLabel.text = "White win! Press 'Restart' or 'Exit'"
-        }
-        if (winner == 2) {
-            inProcess = false
-            statusLabel.text = "Black win! Press 'Restart' or 'Exit'"
+        when (board.win()) {
+            1 -> {
+                inProcess = false
+                statusLabel.text = "White wins! Press 'Restart' or 'Exit'"
+            }
+            2 -> {
+                inProcess = false
+                statusLabel.text = "Black wins! Press 'Restart' or 'Exit'"
+            }
         }
         if (cell == null) return
         val chip = board[cell]
@@ -196,9 +195,9 @@ class CheckersView : View(), BoardListener {
             graphic = circle(radius = 20.0) {
                 fill = when (chip) {
                     Chips.WhiteSimply -> Color.ALICEBLUE
-                    Chips.BlackSimply -> Color.DARKBLUE
+                    Chips.BlackSimply -> Color.BLUE
                     Chips.BlackDamka -> Color.GRAY
-                    Chips.WhiteDamka -> Color.CORAL
+                    Chips.WhiteDamka -> Color.GOLD
                     else -> Color.BLACK
                 }
             }
@@ -207,7 +206,7 @@ class CheckersView : View(), BoardListener {
 
     private fun startTimerIfNeeded() {
         if (whiteComputer != null || blackComputer != null) {
-            timer(daemon = true, period = 2000) {
+            timer(daemon = true, period = 3000) {
                 if (inProcess) {
                     computerToMakeTurn?.let {
                         fire(AutoTurnEvent(it))
@@ -243,14 +242,23 @@ class CheckersView : View(), BoardListener {
         startTimerIfNeeded()
     }
 
-    private fun nextStepBest(color: Int) {
-        val pair = PlayerAI(board).nextStep(color, 4)
-        if (board.mustBite()) board.biteOfCell(pair.first) else
-            board.nextStepSimply(pair.first)
-        board.delete(pair.second)
+    private fun nextStepBest(turn: Boolean) {
+        val pair = PlayerAI(board).nextStep(turn, 6)
+        if (pair == null) {
+            inProcess = false
+            statusLabel.text = if (board.turn) "Black wins" else "White wins"
+        }
+        println(pair)
+        if (board.mustBite()) board.biteOfCell(pair!!.first) else
+            board.nextStepSimply(pair!!.first)
+        board.move(pair.second)
         for (x in 0 until rowsNumber)
             for (y in 0 until columnsNumber)
                 updateBoardAndStatus(Cell(x, y))
-        board.turn = !board.turn
+        if (inProcess) {
+            statusLabel.text = if (board.turn) "Ход белых" else "Ход чёрных"
+            statusLabel.text += ". Белых: ${board.score().first}," +
+                    " Чёрных: ${board.score().second}"
+        }
     }
 }

@@ -12,7 +12,7 @@ class BoardBasedCellListener(private val board: Board) : CellListener {
     }
 
     override fun delete(cell: Cell) {
-        board.delete(cell)
+        board.move(cell)
     }
 
 }
