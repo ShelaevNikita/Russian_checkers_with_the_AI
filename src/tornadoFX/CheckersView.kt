@@ -81,7 +81,7 @@ class CheckersView : View(), BoardListener {
                                     val cell = Cell(row, column)
                                     val button1 = button {
                                         style {
-                                            backgroundColor += Color.BLACK
+                                            backgroundColor += Color.GRAY
                                             minWidth = dimension
                                             minHeight = dimension
                                         }
@@ -111,7 +111,7 @@ class CheckersView : View(), BoardListener {
                                         for (cell0 in buttons0) {
                                             buttons[cell0]?.apply {
                                                 graphic = circle(radius = 20.0) {
-                                                    fill = Color.BLACK
+                                                    fill = Color.GRAY
                                                 }
                                             }
                                         }
@@ -195,10 +195,10 @@ class CheckersView : View(), BoardListener {
             graphic = circle(radius = 20.0) {
                 fill = when (chip) {
                     Chips.WhiteSimply -> Color.ALICEBLUE
-                    Chips.BlackSimply -> Color.BLUE
-                    Chips.BlackDamka -> Color.GRAY
+                    Chips.BlackSimply -> Color.BLACK
+                    Chips.BlackDamka -> Color.DARKBLUE
                     Chips.WhiteDamka -> Color.GOLD
-                    else -> Color.BLACK
+                    else -> Color.GRAY
                 }
             }
         }

@@ -140,8 +140,7 @@ class PlayerAI(private val board: Board) {
                 for (a in 1..count) {
                     val height0 = x + a
                     val width0 = y + a
-                    if ((height0 < height) && (width0 < width) &&
-                            (table[height0][width0] == Chips.NO))
+                    if ((height0 < height) && (width0 < width) && (table[height0][width0] == Chips.NO))
                         moves += Pair(cells, Cell(height0, width0)) else break
                 }
                 for (a in 1..count) {
@@ -351,6 +350,7 @@ class PlayerAI(private val board: Board) {
         val mustBite = mustBite(turn, table)
         val list = if (mustBite.isEmpty())
             nextStepSimply(turn, table) else mustBite
+        println(list)
         if (list.isEmpty()) return null
         val heuristics = mutableListOf<Double>()
         step = -1
@@ -389,8 +389,9 @@ class PlayerAI(private val board: Board) {
                         table: MutableList<MutableList<Chips>>) {
         var biteList = list
         var pair: Pair<Cell, Cell>
+        val random = Random()
         while (biteList.isNotEmpty()) {
-            pair = if (turn) biteList.last() else biteList.first()
+            pair = biteList[random.nextInt(biteList.size)]
             move(turn, pair.first, pair.second, table)
             biteList = biteOfCell(turn, pair.second, table)
         }
