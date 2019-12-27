@@ -376,7 +376,7 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
         }
     }
 
-    fun toString(table: MutableList<MutableList<Chips>>): String {
+    override fun toString(): String {
         val sb = StringBuilder()
         for (x in 0 until height) {
             for (y in 0 until width) {
