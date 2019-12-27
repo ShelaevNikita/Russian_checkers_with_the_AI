@@ -206,7 +206,7 @@ class CheckersView : View(), BoardListener {
 
     private fun startTimerIfNeeded() {
         if (whiteComputer != null || blackComputer != null) {
-            timer(daemon = true, period = 3000) {
+            timer(daemon = true, period = 2000) {
                 if (inProcess) {
                     computerToMakeTurn?.let {
                         fire(AutoTurnEvent(it))
@@ -247,18 +247,19 @@ class CheckersView : View(), BoardListener {
         if (pair == null) {
             inProcess = false
             statusLabel.text = if (board.turn) "Black wins" else "White wins"
-        }
-        println(pair)
-        if (board.mustBite()) board.biteOfCell(pair!!.first) else
-            board.nextStepSimply(pair!!.first)
-        board.move(pair.second)
-        for (x in 0 until rowsNumber)
-            for (y in 0 until columnsNumber)
-                updateBoardAndStatus(Cell(x, y))
-        if (inProcess) {
-            statusLabel.text = if (board.turn) "Ход белых" else "Ход чёрных"
-            statusLabel.text += ". Белых: ${board.score().first}," +
-                    " Чёрных: ${board.score().second}"
+        } else {
+            println(pair)
+            if (board.mustBite()) board.biteOfCell(pair.first) else
+                board.nextStepSimply(pair.first)
+            board.move(pair.second)
+            for (x in 0 until rowsNumber)
+                for (y in 0 until columnsNumber)
+                    updateBoardAndStatus(Cell(x, y))
+            if (inProcess) {
+                statusLabel.text = if (board.turn) "Ход белых" else "Ход чёрных"
+                statusLabel.text += ". Белых: ${board.score().first}," +
+                        " Чёрных: ${board.score().second}"
+            }
         }
     }
 }

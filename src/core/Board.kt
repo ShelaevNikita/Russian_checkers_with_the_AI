@@ -311,18 +311,18 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                     }
             }
         }
+        createSets()
+        chipToDamka()
         if (flagBite) {
             if (biteOfCell(cell).isEmpty()) {
                 flagBite = false
                 turn = !turn
             }
         } else turn = !turn
-        createSets()
-        chipToDamka()
     }
 
     private fun chipToDamka() {
-        val set = if (!turn) whiteSet else blackSet
+        val set = if (turn) whiteSet else blackSet
         for (cells in set) {
             val x = cells.x
             val y = cells.y
@@ -359,10 +359,20 @@ class Board @JvmOverloads constructor(val width: Int = 8, val height: Int = 8) {
                 whiteMove = true
                 break
             }
+            cell0 = cellFirst
+            if (biteOfCell(move).isEmpty()) {
+                whiteMove = true
+                break
+            }
         }
         for (move in blackSet) {
             cell0 = cellFirst
             if (nextStepSimply(move).isNotEmpty()) {
+                blackMove = true
+                break
+            }
+            cell0 = cellFirst
+            if (biteOfCell(move).isEmpty()) {
                 blackMove = true
                 break
             }

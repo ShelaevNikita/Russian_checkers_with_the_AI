@@ -302,12 +302,12 @@ class PlayerAI(private val board: Board) {
         var initial: Double
         val countChange = count - 0.1
         if (maxPlayer) {
-            initial = -10000.0
+            initial = alpha
             for (move in listMove) {
                 val tableGhost = clone(table)
                 if (mustBite.isEmpty())
                     move(turn, move.first, move.second, tableGhost)
-                else moveAll(turn, mustBite, tableGhost)
+                else moveAll(turn, move, tableGhost)
                 val result = minimax(!turn,
                         countChange, depth - 1, !maxPlayer,
                         tableGhost, alphaChange, betaChange) * count
@@ -325,12 +325,12 @@ class PlayerAI(private val board: Board) {
                 numberMoves = 0
             }
         } else {
-            initial = 10000.0
+            initial = beta
             for (move in listMove) {
                 val tableGhost = clone(table)
                 if (mustBite.isEmpty())
                     move(turn, move.first, move.second, tableGhost)
-                else moveAll(turn, mustBite, tableGhost)
+                else moveAll(turn, move, tableGhost)
                 val result = minimax(!turn,
                         countChange, depth - 1, !maxPlayer,
                         tableGhost, alphaChange, betaChange) * count
@@ -342,15 +342,17 @@ class PlayerAI(private val board: Board) {
         return initial
     }
 
+    private var turnFirst = false
+
     fun nextStep(turn: Boolean, depth: Int): Pair<Cell, Cell>? {
-        val alpha = -10000.0
-        val beta = 10000.0
+        turnFirst = turn
+        val alpha = -1000.0
+        val beta = 1000.0
         val count = 1.0
         val maxPlayer = true
         val mustBite = mustBite(turn, table)
         val list = if (mustBite.isEmpty())
             nextStepSimply(turn, table) else mustBite
-        println(list)
         if (list.isEmpty()) return null
         val heuristics = mutableListOf<Double>()
         step = -1
@@ -359,23 +361,22 @@ class PlayerAI(private val board: Board) {
             val tableGhost = clone(table)
             if (mustBite.isEmpty())
                 move(turn, move.first, move.second, tableGhost)
-            else moveAll(turn, mustBite, tableGhost)
+            else moveAll(turn, move, tableGhost)
             if (list.size == 1) return move
             heuristics.add(minimax(!turn, count, depth - 1,
                     !maxPlayer, tableGhost, alpha, beta))
         }
         val maxHeuristics = heuristics.max()!!
+        val listMidCount = mutableListOf<Pair<Int, Double>>()
         var midStep = 0
-        if (depth >= 3) {
+        val random = Random()
+        if ((depth >= 3) && (midSumMoves.isNotEmpty())) {
             val midCountStep = midSumMoves.maxBy { it.second }!!
             for (moves in midSumMoves) {
-                if (moves == midCountStep) {
-                    midStep = moves.first
-                    break
-                }
+                if (moves == midCountStep) listMidCount += moves
             }
+            midStep = listMidCount[random.nextInt(listMidCount.size)].first
         }
-        val random = Random()
         val listMove = mutableListOf<Pair<Cell, Cell>>()
         for (x in 0 until heuristics.size) {
             if (heuristics[x] == maxHeuristics) listMove += list[x]
@@ -385,14 +386,14 @@ class PlayerAI(private val board: Board) {
         else listMove[random.nextInt(listMove.size)]
     }
 
-    private fun moveAll(turn: Boolean, list: List<Pair<Cell, Cell>>,
+    private fun moveAll(turn: Boolean, pairFirst: Pair<Cell, Cell>,
                         table: MutableList<MutableList<Chips>>) {
-        var biteList = list
-        var pair: Pair<Cell, Cell>
+        var biteList = listOf<Pair<Cell, Cell>>()
+        var pair = pairFirst
         val random = Random()
         while (biteList.isNotEmpty()) {
-            pair = biteList[random.nextInt(biteList.size)]
             move(turn, pair.first, pair.second, table)
+            pair = biteList[random.nextInt(biteList.size)]
             biteList = biteOfCell(turn, pair.second, table)
         }
     }
