@@ -291,9 +291,11 @@ class PlayerAI(private val board: Board) {
     private fun minimax(turn: Boolean, count: Double, depth: Int, maxPlayer: Boolean,
                         table: MutableList<MutableList<Chips>>,
                         alpha: Double, beta: Double): Double {
+        if ((board.win() == 1) && (turnFirst))
+            return if (maxPlayer) 100.0 * count else -100.0 * count
+        if ((board.win() == 2) && (!turnFirst))
+            return if (maxPlayer) 100.0 * count else -100.0 * count
         if (depth <= 0) return getValue(turn, table)
-        if ((maxPlayer) && (board.win() == 1)) return 100.0 * count
-        if ((!maxPlayer) && (board.win() == 2)) return -100.0 * count
         var alphaChange = alpha
         var betaChange = beta
         val mustBite = mustBite(turn, table)
