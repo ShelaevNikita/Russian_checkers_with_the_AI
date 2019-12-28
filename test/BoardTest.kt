@@ -4,7 +4,7 @@ import core.PlayerAI
 import org.junit.Assert.*
 import org.junit.Test
 
-class BoardTest {
+class BoardTest1 {
     @Test
     fun control() {
         val board = Board(8, 8)
